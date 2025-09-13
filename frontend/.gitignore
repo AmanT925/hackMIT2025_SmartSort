@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Node.js
+node_modules/
+npm-debug.log*
+build/
+
+# IDE
+.vscode/
+.DS_Store
+
+# Demo files (optional - you might want to keep these)
+demo/sample_mess/
