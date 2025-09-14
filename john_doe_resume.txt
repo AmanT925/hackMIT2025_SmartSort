@@ -1,0 +1,15 @@
+John Doe
+Software Engineer
+
+WORK EXPERIENCE
+Software Engineer at Tech Corp (2020-2024)
+- Developed web applications using Python and React
+- Led a team of 3 developers
+
+EDUCATION
+Bachelor of Computer Science, MIT (2016-2020)
+
+SKILLS
+- Python, JavaScript, React
+- Database design
+- Project management

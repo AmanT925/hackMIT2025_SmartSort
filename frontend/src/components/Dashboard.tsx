@@ -3,6 +3,8 @@ import React, { useState, useEffect, ChangeEvent } from "react";
 import axios from "axios";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import "./Dashboard.css";
+import PerformanceVisualization from "./PerformanceVisualization";
+import "./PerformanceVisualization.css";
 
 type Session = {
   session_id: string;
@@ -23,6 +25,22 @@ const getCategoryIcon = (category: string): string => {
       return '📄';
     case 'Docs':
       return '📝';
+    case 'Documents':
+      return '📄';
+    case 'Images':
+      return '🖼️';
+    case 'Videos':
+      return '🎥';
+    case 'Audio':
+      return '🎵';
+    case 'Archives':
+      return '📦';
+    case 'Spreadsheets':
+      return '📊';
+    case 'Presentations':
+      return '📽️';
+    case 'Others':
+      return '📁';
     default:
       return '📁';
   }
@@ -37,6 +55,9 @@ const categoryColors: Record<string, string> = {
   Videos: "#60a5fa",
   Audio: "#a78bfa",
   Archives: "#f97316",
+  Spreadsheets: "#10b981",
+  Presentations: "#8b5cf6",
+  Others: "#9ca3af",
   Other: "#9ca3af",
 };
 
@@ -47,9 +68,12 @@ const Dashboard: React.FC = () => {
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [categoryCounts, setCategoryCounts] = useState<CategoryCounts>({});
   const [categoryFiles, setCategoryFiles] = useState<any>({});
+  
+  
   const [processing, setProcessing] = useState(false);
   const [organizeFiles, setOrganizeFiles] = useState(false);
   const [generatingDemo, setGeneratingDemo] = useState(false);
+  const [performanceData, setPerformanceData] = useState<any>(null);
 
   useEffect(() => {
     fetchSessions();
@@ -93,6 +117,22 @@ const Dashboard: React.FC = () => {
       console.log("Backend response:", res.data);
       setCategoryCounts(res.data.category_counts);
       setCategoryFiles(res.data.category_files || {});
+      
+      // Store performance data for visualization
+      if (res.data.performance_analysis) {
+        setPerformanceData(res.data);
+        const perf = res.data.performance_analysis;
+        alert(`🚀 PARALLEL PROCESSING COMPLETE!\n\n` +
+              `📊 Performance Metrics:\n` +
+              `• Files Processed: ${res.data.files_processed}\n` +
+              `• Parallel Time: ${perf.parallel_time}s\n` +
+              `• Estimated Serial Time: ${perf.estimated_serial_time}s\n` +
+              `• Speedup: ${perf.speedup}x faster\n` +
+              `• Efficiency: ${perf.efficiency}%\n` +
+              `• Throughput: ${perf.throughput} files/sec\n` +
+              `• Workers Used: ${res.data.workers_used}\n\n` +
+              `⚡ Load Balancing: ${Math.round(perf.bottleneck_analysis.load_balance_ratio * 100)}% efficient`);
+      }
       
       // Show success message with organized path if available
       if (res.data.organized_path) {
@@ -141,6 +181,35 @@ const Dashboard: React.FC = () => {
       setGeneratingDemo(false);
     }
   };
+
+  const generateLargeDemoFiles = async () => {
+    setGeneratingDemo(true);
+    try {
+      const res = await axios.post("http://localhost:8000/generate-large-demo");
+      console.log("Medium demo files generated:", res.data);
+      alert(`Medium demo folder created with ${res.data.file_count} files!\nCheck: ${res.data.demo_path}\n\nNow upload this folder to see parallel processing in action!`);
+    } catch (err) {
+      console.error("Error generating medium demo files:", err);
+      alert("Error generating medium demo files. Check console for details.");
+    } finally {
+      setGeneratingDemo(false);
+    }
+  };
+
+  const generateXLDemoFiles = async () => {
+    setGeneratingDemo(true);
+    try {
+      const res = await axios.post("http://localhost:8000/generate-xl-demo");
+      console.log("XL demo files generated:", res.data);
+      alert(`XL demo folder created with ${res.data.file_count} files!\nCheck: ${res.data.demo_path}\n\nThis will showcase high-scale parallel processing!`);
+    } catch (err) {
+      console.error("Error generating XL demo files:", err);
+      alert("Error generating XL demo files. Check console for details.");
+    } finally {
+      setGeneratingDemo(false);
+    }
+  };
+
 
   return (
     <div className="dashboard-container">
@@ -198,12 +267,43 @@ const Dashboard: React.FC = () => {
           >
             {generatingDemo ? "Generating..." : "🎲 Generate Demo Files"}
           </button>
+          
+          <button 
+            onClick={generateLargeDemoFiles} 
+            disabled={generatingDemo} 
+            className="demo-button"
+            style={{background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}
+          >
+            {generatingDemo ? "Generating..." : "⚡ Medium Demo (50-100 files)"}
+          </button>
+          
+          <button 
+            onClick={generateXLDemoFiles} 
+            disabled={generatingDemo} 
+            className="demo-button"
+            style={{background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'}}
+          >
+            {generatingDemo ? "Generating..." : "🚀 XL Demo (100-200 files)"}
+          </button>
+          
+          <button 
+            onClick={() => {
+              console.log("Current categoryCounts:", categoryCounts);
+              console.log("Current categoryFiles:", categoryFiles);
+              alert(`Categories: ${Object.keys(categoryCounts).length}\nFiles: ${Object.values(categoryCounts).reduce((a, b) => a + b, 0)}`);
+            }}
+            className="demo-button"
+            style={{background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'}}
+          >
+            🔍 Debug State
+          </button>
+          
         </div>
       </div>
 
       {/* Category Cards */}
       <div className="cards-container">
-        {Object.entries(categoryCounts).map(([category, count]) => {
+        {Object.entries(categoryCounts).filter(([category, count]) => count > 0).map(([category, count]) => {
           const counts = Object.values(categoryCounts);
           const maxCount = counts.length > 0 ? Math.max(...counts) : 0;
           const widthPercent = maxCount > 0 ? (count / maxCount) * 100 : 0;
@@ -298,6 +398,11 @@ const Dashboard: React.FC = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
+      )}
+
+      {/* Performance Visualization */}
+      {performanceData && (
+        <PerformanceVisualization data={performanceData} />
       )}
 
       {/* Analytics History Dropdown */}
