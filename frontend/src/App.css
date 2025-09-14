@@ -1,396 +1,191 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Upload, Mic, MicOff, Play, Pause, BarChart3, FolderOpen, Zap, Brain, MessageCircle, FileText, Image, Music, Video, Archive, Code } from 'lucide-react';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-// Mock data for demo
-const performanceMetrics = {
-  filesProcessed: 247,
-  processingSpeed: '4x faster',
-  duplicatesFound: 23,
-  categoriesCreated: 8,
-  timeElapsed: '2.3s'
-};
+/* Fallback styling in case Tailwind doesn't load */
+* {
+  box-sizing: border-box;
+}
 
-const categoryData = [
-  { name: 'Documents', count: 89, color: '#3b82f6', icon: FileText },
-  { name: 'Images', count: 76, color: '#10b981', icon: Image },
-  { name: 'Audio', count: 34, color: '#f59e0b', icon: Music },
-  { name: 'Videos', count: 28, color: '#ef4444', icon: Video },
-  { name: 'Archives', count: 12, color: '#8b5cf6', icon: Archive },
-  { name: 'Code', count: 8, color: '#06b6d4', icon: Code }
-];
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
 
-const SmartSortApp = () => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [isRecording, setIsRecording] = useState(false);
-  const [voiceText, setVoiceText] = useState('');
-  const [analysisResults, setAnalysisResults] = useState<{
-    totalFiles: number;
-    categories: typeof categoryData;
-    performance: typeof performanceMetrics;
-  } | null>(null);
-  const [roastMode, setRoastMode] = useState(false);
-  const [roastText, setRoastText] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+/* Dark gradient background */
+.min-h-screen {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+  color: white;
+}
 
-  const voiceCommands = [
-    "Sort this folder",
-    "Tell me what you found",
-    "Roast my organization",
-    "Find duplicates",
-    "Show me file stats"
-  ];
+/* Container styling */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
 
-  // Drag and drop handlers
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
+.mx-auto { margin-left: auto; margin-right: auto; }
+.max-w-2xl { max-width: 42rem; }
 
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
+/* Text styling */
+.text-5xl {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #f3f2f2; /* black wasnt working */
+  margin-bottom: 1rem;
+}
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files);
-    handleFileAnalysis(files);
-  }, []);
+.font-bold { font-weight: bold; }
+.text-transparent { color: transparent; }
+.bg-gradient-to-r.from-blue-400.to-purple-400 {
+  background: linear-gradient(to right, #60a5fa, #a855f7);
+}
+.bg-clip-text {
+  -webkit-background-clip: text;
+  background-clip: text;
+}
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    handleFileAnalysis(files);
-  };
+.text-xl { font-size: 1.25rem; }
+.text-2xl { font-size: 1.5rem; }
+.text-lg { font-size: 1.125rem; }
 
-  // File analysis simulation
-  const handleFileAnalysis = async (files: File[]) => {
-    setIsAnalyzing(true);
-    setProgress(0);
-    
-    // Simulate progress
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsAnalyzing(false);
-          setAnalysisResults({
-            totalFiles: files.length,
-            categories: categoryData,
-            performance: performanceMetrics
-          });
-          return 100;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 200);
+/* Button styling */
+button {
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
 
-    // Mock API call
-    try {
-      const formData = new FormData();
-      files.forEach((file: File) => formData.append('files', file));
-      // await fetch('http://localhost:8000/analyze', { method: 'POST', body: formData });
-    } catch (error) {
-      console.log('Demo mode - API call simulated');
-    }
-  };
+.bg-gradient-to-r {
+  background: linear-gradient(to right, #2563eb, #7c3aed);
+}
 
-  // Voice recording handlers
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
-    if (!isRecording) {
-      // Start recording
-      setTimeout(() => {
-        setVoiceText("Sort this folder and tell me what you found");
-        setIsRecording(false);
-      }, 3000);
-    }
-  };
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
 
-  const handleVoiceCommand = async (command: string) => {
-    try {
-      if (command.includes('roast')) {
-        setRoastMode(true);
-        setRoastText("Wow, your files are more scattered than my thoughts on a Monday morning! 📁💀 You've got 23 duplicates just chilling like they're at a family reunion, and your naming convention looks like it was created by a caffeinated squirrel. But hey, at least you're consistent... consistently chaotic! 😅");
-      } else {
-        setVoiceText(`Processing: "${command}"`);
-        // await fetch('http://localhost:8000/voice-command', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({ text: command })
-        // });
-      }
-    } catch (error) {
-      console.log('Demo mode - voice command simulated');
-    }
-  };
+/* Upload area styling */
+.border-dashed {
+  border: 2px dashed #4b5563;
+  border-radius: 24px;
+  padding: 48px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: rgba(31, 41, 55, 0.3);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
-      {/* Header */}
-      <div className="container mx-auto px-6 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            SmartSort AI
-          </h1>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Intelligent file organization with parallel processing, voice commands, and AI-powered insights
-          </p>
-        </div>
+.border-dashed:hover {
+  border-color: #6b7280;
+  transform: scale(1.02);
+}
 
-        {/* Main Upload Area */}
-        <div className="mb-12">
-          <div
-            className={`relative border-2 border-dashed rounded-3xl p-12 text-center transition-all duration-300 ${
-              isDragging 
-                ? 'border-blue-400 bg-blue-400/10 scale-105' 
-                : 'border-gray-600 hover:border-gray-500'
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              {...({ webkitdirectory: "" } as any)}
-              onChange={handleFileSelect}
-              className="hidden"
-              aria-label="Select folder for file organization"
-            />
-            
-            <Upload className="mx-auto mb-6 text-blue-400" size={80} />
-            <h3 className="text-2xl font-bold mb-4">Drop your messy folder here</h3>
-            <p className="text-gray-400 mb-6">Or click to select a folder for AI-powered organization</p>
-            
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-            >
-              Choose Folder
-            </button>
-          </div>
-        </div>
+/* Card styling */
+.bg-gray-800 {
+  background: rgba(31, 41, 55, 0.5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 32px;
+  margin: 24px 0;
+}
 
-        {/* Voice Interface */}
-        <div className="mb-12">
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold flex items-center gap-3">
-                <MessageCircle className="text-purple-400" />
-                Voice Commands
-              </h3>
-              
-              <button
-                onClick={toggleRecording}
-                className={`p-4 rounded-full transition-all duration-300 transform hover:scale-110 ${
-                  isRecording 
-                    ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
-                    : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-              >
-                {isRecording ? <MicOff size={24} /> : <Mic size={24} />}
-              </button>
-            </div>
+/* Progress bar */
+.bg-gray-700 {
+  background: #374151;
+  border-radius: 9999px;
+  height: 16px;
+}
 
-            {voiceText && (
-              <div className="mb-6 p-4 bg-gray-700/50 rounded-xl">
-                <p className="text-blue-300">💬 "{voiceText}"</p>
-              </div>
-            )}
+.bg-gradient-to-r.from-blue-500 {
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  height: 16px;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
 
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              {voiceCommands.map((command, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleVoiceCommand(command)}
-                  className="px-4 py-2 bg-gray-700/50 hover:bg-gray-600/50 rounded-lg text-sm transition-all duration-300 transform hover:scale-105"
-                >
-                  "{command}"
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+/* Spacing utilities */
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-12 { margin-bottom: 3rem; }
+.p-4 { padding: 1rem; }
+.p-8 { padding: 2rem; }
+.p-12 { padding: 3rem; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+.py-8 { padding-top: 2rem; padding-bottom: 2rem; }
 
-        {/* Roast Mode */}
-        {roastMode && (
-          <div className="mb-12 animate-fade-in">
-            <div className="bg-gradient-to-r from-orange-900/50 to-red-900/50 backdrop-blur-sm rounded-2xl p-8 border border-orange-500/30">
-              <h3 className="text-2xl font-bold mb-4 text-orange-300">🔥 Roast Mode Activated!</h3>
-              <p className="text-lg leading-relaxed">{roastText}</p>
-              <button
-                onClick={() => setRoastMode(false)}
-                className="mt-4 px-6 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors"
-              >
-                I can take it, give me more! 😤
-              </button>
-            </div>
-          </div>
-        )}
+/* Header specific styling */
+.text-center h1 {
+  display: block;
+  text-align: center;
+  margin: 0 auto 1rem auto;
+}
 
-        {/* Progress Bar */}
-        {isAnalyzing && (
-          <div className="mb-12">
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold flex items-center gap-3">
-                  <Zap className="text-yellow-400" />
-                  Processing Files (Parallel Mode)
-                </h3>
-                <span className="text-2xl font-bold text-blue-400">{Math.round(progress)}%</span>
-              </div>
-              
-              <div className="w-full bg-gray-700 rounded-full h-4 mb-4">
-                <div 
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-4 rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                <div>Files: {Math.round(progress * 2.47)}/247</div>
-                <div>Speed: 4x faster</div>
-                <div>Duplicates: {Math.round(progress * 0.23)}</div>
-                <div>Categories: {Math.round(progress * 0.08)}</div>
-                <div>Time: {(progress * 0.023).toFixed(1)}s</div>
-              </div>
-            </div>
-          </div>
-        )}
+.text-center p {
+  text-align: center;
+  margin: 0 auto;
+}
 
-        {/* Analysis Results */}
-        {analysisResults && (
-          <div className="mb-12 animate-fade-in">
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Performance Metrics */}
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8">
-                <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                  <BarChart3 className="text-green-400" />
-                  Performance Metrics
-                </h3>
-                
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-xl">
-                    <span>Files Processed</span>
-                    <span className="font-bold text-blue-400">{performanceMetrics.filesProcessed}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-xl">
-                    <span>Processing Speed</span>
-                    <span className="font-bold text-green-400">{performanceMetrics.processingSpeed}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-xl">
-                    <span>Duplicates Found</span>
-                    <span className="font-bold text-yellow-400">{performanceMetrics.duplicatesFound}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-xl">
-                    <span>Time Elapsed</span>
-                    <span className="font-bold text-purple-400">{performanceMetrics.timeElapsed}</span>
-                  </div>
-                </div>
-              </div>
+/* Responsive design */
+@media (max-width: 768px) {
+  .text-5xl {
+    font-size: 2.5rem;
+  }
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
 
-              {/* File Categories */}
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8">
-                <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                  <Brain className="text-purple-400" />
-                  AI Categorization
-                </h3>
-                
-                <div className="space-y-3">
-                  {categoryData.map((category, index) => {
-                    const Icon = category.icon;
-                    const percentage = (category.count / performanceMetrics.filesProcessed * 100).toFixed(1);
-                    
-                    return (
-                      <div key={index} className="p-4 bg-gray-700/30 rounded-xl">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <Icon size={20} style={{ color: category.color }} />
-                            <span className="font-semibold">{category.name}</span>
-                          </div>
-                          <span className="font-bold" style={{ color: category.color }}>
-                            {category.count} ({percentage}%)
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-600 rounded-full h-2">
-                          <div 
-                            className="h-2 rounded-full transition-all duration-1000"
-                            style={{ 
-                              width: `${percentage}%`,
-                              backgroundColor: category.color
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+/* Layout utilities */
+.flex { display: flex; }
+.grid { display: grid; }
+.hidden { display: none; }
+.text-center { text-align: center; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-3 { gap: 0.75rem; }
+.gap-8 { gap: 2rem; }
 
-            {/* Before/After Comparison */}
-            <div className="mt-8 bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8">
-              <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                <FolderOpen className="text-cyan-400" />
-                Before vs After
-              </h3>
-              
-              <div className="grid md:grid-cols-2 gap-8">
-                <div>
-                  <h4 className="text-xl font-bold mb-4 text-red-400">Before: Chaos 😵</h4>
-                  <div className="space-y-2 text-sm bg-gray-700/30 p-4 rounded-xl max-h-40 overflow-y-auto">
-                    <div>📄 IMG_001.jpg</div>
-                    <div>📄 document (1).pdf</div>
-                    <div>📄 IMG_001 - Copy.jpg</div>
-                    <div>📄 untitled.mp4</div>
-                    <div>📄 New Document.docx</div>
-                    <div>📄 aaaaa.zip</div>
-                    <div>📄 homework_final_FINAL_v2.pdf</div>
-                    <div>📄 random_file.exe</div>
-                    <div className="text-gray-500">...and 239 more files!</div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="text-xl font-bold mb-4 text-green-400">After: Organized! ✨</h4>
-                  <div className="space-y-2 text-sm bg-gray-700/30 p-4 rounded-xl">
-                    <div>📁 Documents/ (89 files)</div>
-                    <div>📁 Images/ (76 files)</div>
-                    <div>📁 Audio/ (34 files)</div>
-                    <div>📁 Videos/ (28 files)</div>
-                    <div>📁 Archives/ (12 files)</div>
-                    <div>📁 Code/ (8 files)</div>
-                    <div>📁 Duplicates_Removed/ (23 files)</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+/* Colors */
+.text-white { color: white; }
+.text-gray-300 { color: #d1d5db; }
+.text-gray-400 { color: #9ca3af; }
+.text-blue-400 { color: #60a5fa; }
+.text-purple-400 { color: #a78bfa; }
+.text-green-400 { color: #4ade80; }
+.text-yellow-400 { color: #facc15; }
+.text-orange-300 { color: #fdba74; }
 
-        {/* Footer */}
-        <div className="text-center py-8 border-t border-gray-700">
-          <p className="text-gray-400">
-            SmartSort AI - Addressing HackMIT challenges: Voloridge (Parallel Processing) • Rox (Messy Data) • Wispr (Voice Interface) • Demo (Clean UI)
-          </p>
-        </div>
-      </div>
-      
-      <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
-        }
-      `}</style>
-    </div>
-  );
-};
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-export default SmartSortApp;
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Roast mode styling */
+.bg-gradient-to-r.from-orange-900 {
+  background: linear-gradient(to right, rgba(194, 65, 12, 0.5), rgba(153, 27, 27, 0.5));
+  border: 1px solid rgba(251, 146, 60, 0.3);
+}
