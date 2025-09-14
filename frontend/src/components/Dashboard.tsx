@@ -3,8 +3,6 @@ import React, { useState, useEffect, ChangeEvent } from "react";
 import axios from "axios";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import "./Dashboard.css";
-import PerformanceVisualization from "./PerformanceVisualization";
-import "./PerformanceVisualization.css";
 
 type Session = {
   session_id: string;
@@ -73,7 +71,7 @@ const Dashboard: React.FC = () => {
   const [processing, setProcessing] = useState(false);
   const [organizeFiles, setOrganizeFiles] = useState(false);
   const [generatingDemo, setGeneratingDemo] = useState(false);
-  const [performanceData, setPerformanceData] = useState<any>(null);
+  // Removed unused performanceData state
 
   useEffect(() => {
     fetchSessions();
@@ -115,30 +113,24 @@ const Dashboard: React.FC = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       console.log("Backend response:", res.data);
-      setCategoryCounts(res.data.category_counts);
+      
+      // Update state with the analysis results
+      setCategoryCounts(res.data.category_counts || {});
       setCategoryFiles(res.data.category_files || {});
       
-      // Store performance data for visualization
-      if (res.data.performance_analysis) {
-        setPerformanceData(res.data);
-        const perf = res.data.performance_analysis;
-        alert(`🚀 PARALLEL PROCESSING COMPLETE!\n\n` +
-              `📊 Performance Metrics:\n` +
-              `• Files Processed: ${res.data.files_processed}\n` +
-              `• Parallel Time: ${perf.parallel_time}s\n` +
-              `• Estimated Serial Time: ${perf.estimated_serial_time}s\n` +
-              `• Speedup: ${perf.speedup}x faster\n` +
-              `• Efficiency: ${perf.efficiency}%\n` +
-              `• Throughput: ${perf.throughput} files/sec\n` +
-              `• Workers Used: ${res.data.workers_used}\n\n` +
-              `⚡ Load Balancing: ${Math.round(perf.bottleneck_analysis.load_balance_ratio * 100)}% efficient`);
-      }
+      // Show success message with processing details
+      const filesProcessed = res.data.files_processed || 0;
+      const processingTime = res.data.processing_time ? res.data.processing_time.toFixed(2) : 'N/A';
       
       // Show success message with organized path if available
       if (res.data.organized_path) {
-        alert(`Files organized successfully!\nCheck: ${res.data.organized_path}`);
+        alert(`✅ ${filesProcessed} files processed successfully in ${processingTime} seconds!\n` +
+              `Organized files saved to: ${res.data.organized_path}`);
+      } else {
+        alert(`✅ ${filesProcessed} files analyzed successfully in ${processingTime} seconds!`);
       }
       
+      // Refresh the session list
       fetchSessions();
     } catch (err) {
       console.error("Error during analysis:", err);
@@ -182,34 +174,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const generateLargeDemoFiles = async () => {
-    setGeneratingDemo(true);
-    try {
-      const res = await axios.post("http://localhost:8000/generate-large-demo");
-      console.log("Medium demo files generated:", res.data);
-      alert(`Medium demo folder created with ${res.data.file_count} files!\nCheck: ${res.data.demo_path}\n\nNow upload this folder to see parallel processing in action!`);
-    } catch (err) {
-      console.error("Error generating medium demo files:", err);
-      alert("Error generating medium demo files. Check console for details.");
-    } finally {
-      setGeneratingDemo(false);
-    }
-  };
-
-  const generateXLDemoFiles = async () => {
-    setGeneratingDemo(true);
-    try {
-      const res = await axios.post("http://localhost:8000/generate-xl-demo");
-      console.log("XL demo files generated:", res.data);
-      alert(`XL demo folder created with ${res.data.file_count} files!\nCheck: ${res.data.demo_path}\n\nThis will showcase high-scale parallel processing!`);
-    } catch (err) {
-      console.error("Error generating XL demo files:", err);
-      alert("Error generating XL demo files. Check console for details.");
-    } finally {
-      setGeneratingDemo(false);
-    }
-  };
-
+  // Removed unused generateDemoFolder function
 
   return (
     <div className="dashboard-container">
@@ -264,26 +229,9 @@ const Dashboard: React.FC = () => {
             onClick={generateDemoFiles} 
             disabled={generatingDemo} 
             className="demo-button"
+            style={{background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'}}
           >
             {generatingDemo ? "Generating..." : "🎲 Generate Demo Files"}
-          </button>
-          
-          <button 
-            onClick={generateLargeDemoFiles} 
-            disabled={generatingDemo} 
-            className="demo-button"
-            style={{background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}
-          >
-            {generatingDemo ? "Generating..." : "⚡ Medium Demo (50-100 files)"}
-          </button>
-          
-          <button 
-            onClick={generateXLDemoFiles} 
-            disabled={generatingDemo} 
-            className="demo-button"
-            style={{background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'}}
-          >
-            {generatingDemo ? "Generating..." : "🚀 XL Demo (100-200 files)"}
           </button>
           
           <button 
@@ -399,12 +347,7 @@ const Dashboard: React.FC = () => {
           </ResponsiveContainer>
         </div>
       )}
-
-      {/* Performance Visualization */}
-      {performanceData && (
-        <PerformanceVisualization data={performanceData} />
-      )}
-
+      {/* Performance visualization removed - using sequential processing */}
       {/* Analytics History Dropdown */}
       <div className="analytics-dropdown">
         <details className="history-details">

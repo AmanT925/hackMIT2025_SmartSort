@@ -28,27 +28,68 @@ class AdvancedFileAnalyzer:
         category_counts = {cat: 0 for cat in self.FILE_CATEGORIES}
         category_files = {cat: [] for cat in self.FILE_CATEGORIES}
         category_files["Others"] = []
-
+        
+        print(f"🔍 Starting organization in: {folder_path}")
+        
+        # First, collect all files to avoid modifying the directory while iterating
+        all_files = []
         for root, dirs, files in os.walk(folder_path):
             for file in files:
-                files_processed += 1
                 file_path = os.path.join(root, file)
-                file_size = os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                all_files.append((file_path, file, root))
+        
+        for file_path, file, root in all_files:
+            try:
+                if not os.path.exists(file_path):
+                    print(f"⚠️  File no longer exists, skipping: {file_path}")
+                    continue
+                    
+                files_processed += 1
+                file_size = os.path.getsize(file_path)
+                
+                # Skip files in category directories we've already created
+                relative_path = os.path.relpath(file_path, folder_path)
+                if os.path.sep in relative_path and any(cat in relative_path.split(os.path.sep)[0] for cat in self.FILE_CATEGORIES):
+                    continue
+                
+                print(f"📄 Processing file {files_processed}: {file}")
                 
                 # Use enhanced categorization
                 category = self._categorize_file(file_path)
                 
                 # Create category folder and move file
                 target_dir = os.path.join(folder_path, category)
-                os.makedirs(target_dir, exist_ok=True)
-                shutil.move(file_path, os.path.join(target_dir, file))
+                target_path = os.path.join(target_dir, file)
                 
+                # Skip if already in the right place
+                if os.path.dirname(file_path) == target_dir:
+                    print(f"   ✓ Already in correct category: {category}")
+                else:
+                    print(f"   → Moving to category: {category}")
+                    os.makedirs(target_dir, exist_ok=True)
+                    
+                    # Handle filename conflicts
+                    if os.path.exists(target_path):
+                        base, ext = os.path.splitext(file)
+                        counter = 1
+                        while os.path.exists(target_path):
+                            new_filename = f"{base}_{counter}{ext}"
+                            target_path = os.path.join(target_dir, new_filename)
+                            counter += 1
+                        print(f"   ⚠️  Renamed to avoid conflict: {os.path.basename(target_path)}")
+                    
+                    shutil.move(file_path, target_path)
+                
+                # Update counts and file info
                 category_counts[category] += 1
                 category_files[category].append({
-                    'name': file,
+                    'name': os.path.basename(target_path),
                     'size': file_size,
-                    'path': os.path.join(target_dir, file)
+                    'path': target_path
                 })
+                
+            except Exception as e:
+                print(f"❌ Error processing {file}: {str(e)}")
 
         processing_time = time.time() - start_time
         result = {
